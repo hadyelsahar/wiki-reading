@@ -33,6 +33,7 @@ of the training set to play around with if disk space is limited.
 ### Features
 
 Each instance contains these features (some features may be empty).
+example of json file instance : http://pastie.org/10987207
 
 | feature name                 | description                                                                      |
 |------------------------------|----------------------------------------------------------------------------------|
@@ -58,3 +59,5 @@ Each instance contains these features (some features may be empty).
 | `sentence_breaks`            | Word indices into the document indicating a sentence boundary.                   |
 | `string_sequence`            | String sequence for the words in the document.                                   |
 | `type_sequence`              | `type.vocab` ID sequence for tags (POS, type, etc.) in the document.             |
+
+

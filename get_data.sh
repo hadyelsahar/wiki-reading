@@ -16,6 +16,4 @@ tar xvzf test.json.tar.gz &
 wget -c https://storage.googleapis.com/wikireading/train.json.tar.gz
 tar xvzf train.json.tar.gz
 
-
-
 echo "Done."

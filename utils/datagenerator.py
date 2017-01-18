@@ -9,68 +9,129 @@ Author: hadyelsahar@gmail.com
 """
 import json
 import numpy as np
+import pandas as pd
+from utils.onehotencoder import OneHotEncoder
 
 class WikiReadingDataGenerator:
 
-    def vectorizefile(self, filename, vectorize_function):
-        """
-        a function takes a filename and returns input and output data for it
-        in testing mode set TESTING = True
-        :param filename: file name to extract data from and vectorize
-        :param vectorize_function: function to extract vector input of the model given 1 json
-                                    entry from the dataset
-        :return:
-        """
+    def __init__(self, x_dict=None, y_dict=None):
 
-        lines = open(filename).readlines()
+        if x_dict is not None:
+            self.x_vocabulary = pd.read_csv(x_dict, sep="\t", names=["id", "word", "count"])
+        else:
+            self.x_vocabulary = None
 
-        X = []
-        Y = []
+        if y_dict is not None:
+            self.y_vocabulary = pd.read_csv(y_dict, sep="\t", names=["id", "word", "count"])
+        else:
+            self.y_vocabulary = None
 
-        for c, l in enumerate(lines):
-
-            x, y = vectorize_function(json.loads(l))
-            X.append(x)
-            Y.append(y)
-
-        return X, Y
+        self.y_onehot_encoder = OneHotEncoder()
+        self.y_onehot_encoder.fit(self.y_vocabulary["id"].values)
 
 
-    def generate(self, file_names, batchsize, vectorize_function=None):
+    def generate(self, file_names, batchsize, x_vectorize_function, y_vectorize_function, **kwargs):
         """
         Generate data batch by batch
         The generator is expected to loop over its data indefinitely
-
         :param file_names: list of file names to read from
         :param batchsize: batch size to return each loop
+        :param x_vectorize_function:
+        :param y_vectorize_function:
+        :param kwargs: kwargs are reserved to x_vectorizefunction since it needs more attributes
         :return:
         """
 
-        if vectorize_function is None:
-            vectorize_function = WikiReadingDataGenerator.demo_vectorizefunction
-
         while 1:
+            x_batch = []
+            y_batch = []
             for filename in file_names:
-                X, Y = self.vectorizefile(filename, vectorize_function)
+                lines = open(filename).readlines()
 
-                for x, y in zip(chunks(X, batchsize), chunks(Y, batchsize)):
-                    yield x, y
+                for c, l in enumerate(lines):
 
-    @staticmethod
-    def demo_vectorizefunction(self, j):
+                    x = x_vectorize_function(json.loads(l), **kwargs)
+                    y = y_vectorize_function(json.loads(l))
+
+                    x_batch.append(x)
+                    y_batch.append(y)
+
+                    if len(x_batch) == batchsize:
+                        yield x_batch, y_batch
+                        x_batch = []
+                        y_batch = []
+
+    def demo_x_vectorizefunction(self, j):
         """
         a demo vectorizing function that takes a single json entry from wikireading dataset and return the
-        input X and the label y for it
+        input X which is sequence of word indices
 
         :param j: one json file entry from the wikireading dataset
-        :return: x, y :  x is the input vector for the dataset has to be a numpy array
-                         y is a label
+        :return: x :  x is the input vector for the dataset has to be a numpy array
         """
 
-        y = np.array(j['raw_answer_ids'])
         x = np.array(j['document_sequence'], dtype=int)
-        return x, y
 
+        return x
+
+    def demo_y_vectorizefunction(self, j):
+        """
+        a demo vectorizing function that takes a single json entry from wikireading dataset and return the
+        the label y for it
+
+        :param j: one json file entry from the wikireading dataset
+        :return: y :  y is a label int
+        """
+
+        y = np.array(j['raw_answer_ids'][0])
+        return y
+
+    def bow_x_vectorizer(self, j, dtype='int32', padding='post', truncating='post', value=0., maxlen=20):
+        """
+        function to Vectorize each json entry
+        each document words are first trimmed and then question sequence of words are added later afterwards
+
+        :param j: one json file entry from the wikireading dataset
+        :param maxlen: max sequence length of each document
+        :param dtype: type of the array values
+        :param padding: 'post' or 'pre'  either pad short sequences from the beginning fo the end
+        :param truncating: 'post' or 'pre'  either truncate long sequences from the beginning fo the end
+        :return: x, y :  x of size
+                         y is a label
+        """
+        # pad or truncate
+        docseq = j['document_sequence']
+        qseq = j['question_sequence']
+
+        diff = len(docseq) + len(qseq) - maxlen
+
+        if diff > 0:
+            # truncate
+            if truncating == 'post':
+                docseq = docseq[0:-diff]
+            elif truncating == 'pre':
+                docseq = docseq[diff:]
+
+        elif diff < 0:
+            # pad
+            paddingseq = [value] * abs(diff)
+            if padding == 'post':
+                docseq = docseq + paddingseq
+            elif padding == 'pre':
+                docseq = padding + docseq
+
+        x = np.array(docseq + qseq, dtype=dtype)
+
+        return x
+
+    def onehot_y_vectorizer(self, j):
+        """
+        :param j:
+        :return:
+        """
+
+        y = np.array(self.y_onehot_encoder.tranform_single(j['raw_answer_ids'][0]), dtype=int)
+        return y
 
 
 
@@ -83,6 +144,8 @@ def chunks(a, n):
     """
     for i in range(0, len(a), n):
         yield a[i:i + n]
+
+
 
 
 

@@ -86,7 +86,7 @@ class WikiReadingDataGenerator:
         y = np.array(j['raw_answer_ids'][0])
         return y
 
-    def bow_x_vectorizer(self, j, nb_words=None, maxlen=20, padding='post', truncating='post', pad_id=0, oov_id=0, dtype='int32'):
+    def bow_x_vectorizer(self, j, nb_words=None, maxlen=300, padding='post', truncating='post', pad_id=0, oov_id=0, dtype='int32'):
         """
         function to Vectorize each json entry
         each document words are first trimmed and then question sequence of words are added later afterwards

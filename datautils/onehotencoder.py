@@ -10,6 +10,7 @@ class OneHotEncoder:
 
         self.max = None
         self.min = None
+        self.shape = None
 
     def fit(self, vocabulary):
         """
@@ -20,7 +21,7 @@ class OneHotEncoder:
         voc = np.array(vocabulary)
         self.max = voc.max()
         self.min = voc.min()
-
+        self.shape = self.max-self.min+1
 
     def transform(self, x):
 

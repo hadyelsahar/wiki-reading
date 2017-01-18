@@ -10,7 +10,7 @@ Author: hadyelsahar@gmail.com
 import json
 import numpy as np
 import pandas as pd
-from utils.onehotencoder import OneHotEncoder
+from datautils.onehotencoder import OneHotEncoder
 
 class WikiReadingDataGenerator:
 
@@ -57,7 +57,7 @@ class WikiReadingDataGenerator:
                     y_batch.append(y)
 
                     if len(x_batch) == batchsize:
-                        yield x_batch, y_batch
+                        yield np.array(x_batch), np.array(y_batch)
                         x_batch = []
                         y_batch = []
 
@@ -139,7 +139,6 @@ class WikiReadingDataGenerator:
 
         y = np.array(self.y_onehot_encoder.tranform_single(j['raw_answer_ids'][0]), dtype=int)
         return y
-
 
 
 def chunks(a, n):

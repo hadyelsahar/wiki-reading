@@ -86,16 +86,19 @@ class WikiReadingDataGenerator:
         y = np.array(j['raw_answer_ids'][0])
         return y
 
-    def bow_x_vectorizer(self, j, dtype='int32', padding='post', truncating='post', value=0., maxlen=20):
+    def bow_x_vectorizer(self, j, nb_words=None, maxlen=20, padding='post', truncating='post', pad_id=0, oov_id=0, dtype='int32'):
         """
         function to Vectorize each json entry
         each document words are first trimmed and then question sequence of words are added later afterwards
 
         :param j: one json file entry from the wikireading dataset
+        :param nb_words: None or int. Maximum number of words to work with (if set, words that aren't included in the top words will be replaced by the index 0).
         :param maxlen: max sequence length of each document
         :param dtype: type of the array values
         :param padding: 'post' or 'pre'  either pad short sequences from the beginning fo the end
         :param truncating: 'post' or 'pre'  either truncate long sequences from the beginning fo the end
+        :param pad_id: wordid to put for padding  default 0
+        :param oov_id: out of vocabulary wordid to replace words that doesn't appear in the top nb_words
         :return: x, y :  x of size
                          y is a label
         """
@@ -114,15 +117,19 @@ class WikiReadingDataGenerator:
 
         elif diff < 0:
             # pad
-            paddingseq = [value] * abs(diff)
+            paddingseq = [pad_id] * abs(diff)
             if padding == 'post':
                 docseq = docseq + paddingseq
             elif padding == 'pre':
                 docseq = padding + docseq
 
-        x = np.array(docseq + qseq, dtype=dtype)
+        seq = docseq + qseq
 
-        return x
+        # limiting the vocab to top nb_words
+        if nb_words is not None:
+            seq = [i if i < nb_words else oov_id for i in seq]
+
+        return np.array(seq, dtype=dtype)
 
     def onehot_y_vectorizer(self, j):
         """

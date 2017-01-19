@@ -33,7 +33,7 @@ model = Sequential()
 model.add(Embedding(TOP_WORDS, EMB_VEC_LENGTH, input_length=MAX_SEQ_LENGTH))
 model.add(GlobalAveragePooling1D())
 
-model.add(Dense(output_dim=g.y_onehot_encoder.shape, input_dim=MAX_SEQ_LENGTH))
+model.add(Dense(output_dim=g.y_onehot_encoder.shape, input_dim=MAX_SEQ_LENGTH, activation='softmax')))
 model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
 
 print(model.summary())
